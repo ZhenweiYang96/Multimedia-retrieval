@@ -1,3 +1,8 @@
+#!/bin/python3
+"""
+Feature extraction module
+"""
+
 ###library and set directory
 import os
 import sys

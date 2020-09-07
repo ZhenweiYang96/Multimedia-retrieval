@@ -1,3 +1,9 @@
+#!/bin/python3
+"""
+Run the flipping test
+"""
+
+
 ###library and set directory
 import os
 import sys

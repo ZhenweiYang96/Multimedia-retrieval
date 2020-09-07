@@ -1,3 +1,8 @@
+#!/bin/python3
+"""
+File containing the preprocessing pipeline
+"""
+
 ###library and set directory
 import os
 import sys

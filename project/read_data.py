@@ -1,3 +1,9 @@
+#!/bin/python3
+"""
+Reading in the data after preprocessing it
+"""
+
+
 # library and set directory
 import os
 import sys
