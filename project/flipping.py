@@ -17,7 +17,6 @@ vertices = np.asarray(mesh.vertices)
 #print(triangle)
 #print("length vertices:", len(vertices))
 
-counter = 0
 
 ###Total sum
 fi = [0, 0, 0]
