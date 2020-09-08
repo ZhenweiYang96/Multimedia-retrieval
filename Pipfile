@@ -7,10 +7,20 @@ name = "pypi"
 matplotlib = "*"
 numpy = "*"
 pandas = "*"
-open3d = "*"
+open3d = "== 0.10.0.0"
 
 [dev-packages]
-black = "*"
+# Code formatter. Needs explicit version: Pipenv ignores 'beta' releases.
+black = "== 18.9b0"
+# Python type checker
+mypy = "*"
+ipython = "*"
+jupyterlab = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.7"
+
+[scripts]
+format = "black project"
+format-check = "black --check --diff project"
+typecheck = "mypy project/"
