@@ -11,13 +11,13 @@ from math import *
 mesh_df = pd.read_excel('excel_file/results.xlsx')
 
 ###Directory
-directory = 'data/LabeledDB_new'
+directory = 'C:\\Users\\User\\Documents\\Uni stuff\\Master\\Multimedia retrieval\\project\data\\normalized'
 dirs = os.fsencode(directory)
 file_list = os.listdir(dirs)
 
 for mesh_id, class_shape in zip(mesh_df['id'], mesh_df['class_shape']):
     mesh = open3d.io.read_triangle_mesh(directory + '/' + class_shape + '/' + str(mesh_id) + '.off')
-
+    open3d.visualization.draw_geometries([mesh])
     mesh.get_center()  # this is the current center (it is not 0,0,0)
     mesh.translate(-np.asarray(mesh.get_center()))  # move it to 0,0,0
     # open3d.visualization.draw_geometries([mesh])
@@ -41,6 +41,7 @@ for mesh_id, class_shape in zip(mesh_df['id'], mesh_df['class_shape']):
     rotation_mat = np.column_stack((eigen_vectors[:, position[0]], eigen_vectors[:, position[1]],
                                     eigen_vectors[:, position[2]]))  # first column longest
 
+    print("rotation matrix: ", rotation_mat)
     ###Rotation angle
     theta1 = -np.arcsin(rotation_mat[2, 0])  # the is the rotation angle for y axis
     theta2 = np.pi - theta1
@@ -57,11 +58,48 @@ for mesh_id, class_shape in zip(mesh_df['id'], mesh_df['class_shape']):
     ###the angle will be multiplied with -1 because we want to align the eigenvector to original coordinate-frame
     mesh.rotate(R, center=(0, 0, 0))  # rotate
 
-    # Flip the mesh upside down if need
-    eccentricity = abs(eigen_values[position[0]]) / abs(eigen_values[position[1]])
-    print("eccentricity: \n", eccentricity)
-    print(mesh_id, class_shape)
-    flipping = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
-    mesh = mesh.transform(flipping)
+    ###Which point the triangle is made of
+    triangle = np.asarray(mesh.triangles)
 
+    ###The coordination of the points
+    vertices = np.asarray(mesh.vertices)
+    # print(vertices[0])
+    # print(triangle)
+    # print("length vertices:", len(vertices))
+
+    ###Total sum
+    fi = [0, 0, 0]
+
+    ###Get the center of each triangle
+    for i in triangle:
+        # print("triangle point: ", i)
+        j = i
+        coordinates = []
+
+        ###Get coordinates of the points
+        for j in i:
+            # print("coordinates of the points: ", vertices[j])
+            ###List of the coordinates of the three points
+            coordinates.append(vertices[j])
+        ###sum the coordinates to get the center point
+        x_coord = sum(k[0] for k in coordinates) / 3
+        y_coord = sum(k[1] for k in coordinates) / 3
+        z_coord = sum(k[2] for k in coordinates) / 3
+        # print("coordinate: ", x_coord, y_coord, z_coord)
+
+        ###Store coordinates in numpy
+        center_coord = [x_coord, y_coord, z_coord]
+
+        fi += np.sign(center_coord) * np.square(center_coord)
+        #print(fi)
+    ###Transformation matrix
+    #print(fi[0], fi[1], fi[2])
+
+    F = np.matrix([[np.sign(fi[0]), 0, 0, 0],
+                   [0, np.sign(fi[1]), 0, 0],
+                   [0, 0, np.sign(fi[2]), 0],
+                   [0, 0, 0, 1]])
+    #print('F: ', F)
+
+    mesh = mesh.transform(F)
     open3d.visualization.draw_geometries([mesh])
