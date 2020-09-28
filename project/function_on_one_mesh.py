@@ -6,8 +6,7 @@ import pandas as pd
 import numpy as np
 from math import *
 from git_clone import *
-
-mesh = open3d.io.read_triangle_mesh("data/LabeledDB_new/Human/1.off")
+from preprocessing import *
 
 
 def check_properties(name, mesh):
@@ -58,18 +57,27 @@ def check_properties(name, mesh):
     open3d.visualization.draw_geometries(geoms, mesh_show_back_face=True)
 
 
+mesh = open3d.io.read_triangle_mesh("data/LabeledDB_new/Human/1.off")
+mesh = basic_normalization(mesh)
+mesh = mesh_samplng(mesh)
+mesh = align_axis(mesh)
+
+#mesh = flipping(mesh)
 #help(open3d.geometry.PointCloud)
 mesh.compute_vertex_normals()
 #check_properties('human', mesh)
 triangle = np.asarray(mesh.triangles)
 vertex = np.asarray(mesh.vertices)
 
-with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
-    triangle_clusters, cluster_n_triangles, cluster_area = (
-        mesh.cluster_connected_triangles())
+
+triangle_clusters, cluster_n_triangles, cluster_area = mesh.cluster_connected_triangles()
 triangle_clusters = np.asarray(triangle_clusters)
 cluster_n_triangles = np.asarray(cluster_n_triangles)
 cluster_area = np.asarray(cluster_area)
+
+print(triangle_clusters)
+print(cluster_n_triangles)
+print(cluster_area)
 
 longest = []
 for i in range(2002):
@@ -82,3 +90,4 @@ for i in range(2002):
 
 #print(longest)
 #print(len(longest))
+

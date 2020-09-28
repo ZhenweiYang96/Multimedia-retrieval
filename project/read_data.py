@@ -97,7 +97,7 @@ def mesh_to_data(directory, name):
                                                         cos_second_angle]],
                                                       columns=mesh_df.columns))
 
-    saved_directory = 'C:\\Users\\User\\Documents\\GitHub\\Multimedia-retrieval\\project\\excel_file\\'
+    saved_directory = 'excel_file\\'
     print(saved_directory + name + '.xlsx')
     return mesh_df.to_excel(saved_directory + name + '.xlsx', index=False)  # save an excel
 
