@@ -22,11 +22,10 @@ split(df,"D1")
 split(df,"D2")
 split(df,"D3")
 split(df,"D4")
-del df['A3','D1','D2','D3','D4']
 stand_feature = df.drop(['A3','D1','D2','D3','D4'], axis=1)
 
 # predict
-list(stand_feature.columns)
+
 X = stand_feature.iloc[:,3:108]
 Y = stand_feature[['class']]
 #actual = []
@@ -34,11 +33,9 @@ Y = stand_feature[['class']]
 #    actual.append(str(item).strip("\'[]"))
 
 knn = KNeighborsClassifier(n_neighbors=19).fit(X, Y)
-y_hat = knn.predict(X)
-metrics.plot_roc_curve(knn, X, Y)
 plot_confusion_matrix(knn, X, Y)
 
 # calculate the distance
-shape1 = stand_feature.loc[0,"surface_area":"D4_19"]
-shape2 = stand_feature.loc[1,"surface_area":"D4_19"]
-distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(shape1, shape2)]))
+#shape1 = stand_feature.loc[0,"surface_area":"D4_19"]
+#shape2 = stand_feature.loc[1,"surface_area":"D4_19"]
+#distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(shape1, shape2)]))
