@@ -23,7 +23,7 @@ split(df,"D1")
 split(df,"D2")
 split(df,"D3")
 split(df,"D4")
-stand_feature = df.drop(['A3','D1','D2','D3','D4'], axis=1)
+df = df.drop(['A3','D1','D2','D3','D4'], axis=1)
 
 # predict
 #X = stand_feature.iloc[:,3:108]
