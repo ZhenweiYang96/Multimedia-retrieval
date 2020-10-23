@@ -6,20 +6,10 @@ from sklearn import metrics
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
 
-df = pd.read_csv('excel_file\\standardized.csv')
-df[['A3', 'D1', 'D2', 'D3', 'D4']] = df[['A3', 'D1', 'D2', 'D3', 'D4']] .apply(adjust_string_to_float)
-
-df['surface_area'] = standardize_single_value('surface_area', df)
-df['sphericity'] = standardize_single_value('sphericity', df)
-df['bounding_box_volume'] = standardize_single_value('bounding_box_volume', df)
-df['diameter'] = standardize_single_value('diameter', df)
-df['eccentricity'] = standardize_single_value('eccentricity', df)
-
-df['A3'] = to_percentage('A3', df)
-df['D1'] = to_percentage('D1', df)
-df['D2'] = to_percentage('D2', df)
-df['D3'] = to_percentage('D3', df)
-df['D4'] = to_percentage('D4', df)
+df = pd.read_csv("excel_file\\matching_features.csv")
+df[['A3', 'D1', 'D2', 'D3', 'D4']] = df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
+    feature_adjustment)
+del df['Unnamed: 0']
 
 def split(df, colname):
     for i in range(0,20):
@@ -53,8 +43,8 @@ stand_feature = df.drop(['A3','D1','D2','D3','D4'], axis=1)
 
 def scalability(mesh_id ,df, k):
     df_back = df.drop(df.index[df['mesh_id'] == mesh_id].to_list()[0],axis=0) # first, we exclude the query shape
-    query_shape = df[df['mesh_id'] == mesh_id].iloc[:,3:108] # the row for query shape
-    X = df_back.iloc[:,3:108] # predictor
+    query_shape = df[df['mesh_id'] == mesh_id].iloc[:,3:107] # the row for query shape
+    X = df_back.iloc[:,3:107] # predictor
     knn = NearestNeighbors(n_neighbors=k, algorithm='kd_tree').fit(X) # knn
     distances_knn, indices_knn = knn.kneighbors(np.asarray(query_shape).reshape(1,-1))
     distances_knn = distances_knn[0].tolist()
