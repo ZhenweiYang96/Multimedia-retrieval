@@ -5,6 +5,8 @@ from step3_function import *
 import re
 from statistics import stdev
 from processing_distribution_function import *
+from PIL import Image
+import glob
 import itertools
 
 # Step 1 read data
@@ -209,43 +211,77 @@ def get_weights(database_name):
     return weights
 
 
-def matching(single_feature, has_weight):
+# Converting links to html tags
+def path_to_image_html(path):
+    return '<img src="' + path + '" width="200" >'
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+
+def matching(single_feature):
 
     ###Features of all the meshes we have seen so far
     database_feature = pd.read_csv('excel_file\\matching_features.csv')
     database_feature[['A3', 'D1', 'D2', 'D3', 'D4']] = database_feature[['A3', 'D1', 'D2', 'D3', 'D4']].apply(feature_adjustment)
     database_feature = database_feature.iloc[:, 2:len(database_feature.columns)]
 
-    distance = []
+    mesh_distance = []
+    euc_list = []
     emd_list = []
     ###Id and shape
     mesh_info = database_feature.iloc[:, 0:2]
-    if has_weight == 'y':
-        weights = pd.read_csv('excel_file\\weights.csv')
-        weights = weights.loc[:, 'weights']
-        weights = np.asarray(weights)
-        weights = 1 / np.asarray(weights)
-    else:
-        weights = [1] * 10
+
+    weights = pd.read_csv('excel_file\\weights.csv')
+    weights = weights.loc[:, 'weights']
+    weights = np.asarray(weights)
+    weights = 1 / np.asarray(weights)
 
     for _, row in database_feature.iloc[:, 2:len(database_feature.columns)].iterrows():
-        row[0:5] = np.multiply(row[0:5], weights[0:5])
-        row[5] = [i * weights[5] for i in row[5]]
-        row[6] = [i * weights[6] for i in row[6]]
-        row[7] = [i * weights[7] for i in row[7]]
-        row[8] = [i * weights[8] for i in row[8]]
-        row[9] = [i * weights[9] for i in row[9]]
+        # row[0:5] = np.multiply(row[0:5], weights[0:5])
+        # row[5] = [i * weights[5] for i in row[5]]
+        # row[6] = [i * weights[6] for i in row[6]]
+        # row[7] = [i * weights[7] for i in row[7]]
+        # row[8] = [i * weights[8] for i in row[8]]
+        # row[9] = [i * weights[9] for i in row[9]]
         ###Create a flattened list so we can use the EMD
         single_value_vector = row[0:5].tolist()
         distribution_vector = np.hstack(row[5:10]).tolist()
         #distribution_vector[:] = [x / 20 for x in distribution_vector]
         #single_feature[5:len(single_feature)][:] = [x / 20 for x in single_feature[5:len(single_feature)]]
-        euc_dist = euclidean_distance(single_feature[0:5], single_value_vector)
-        euc_dist = euc_dist / 95
-        emd = earth_mover_distance(single_feature[5:len(single_feature)], distribution_vector)
-        distance.append(euc_dist + emd)
-        emd_list.append(emd)
-    mesh_info.loc[:, 'distance'] = distance
+
+        sum_value = 0
+        for i in range(0, 5):
+            euc_dist = euclidean_distance(single_feature[i], single_value_vector[i])
+            euc_dist = (euc_dist * weights[i]) / 375
+            euc_list.append(euc_dist)
+            sum_value += euc_dist
+        for j in range(0, 100, 20):
+            emd = earth_mover_distance(single_feature[j+5:j+25], distribution_vector[j:j+20]) * weights[int(j/20)]
+            emd_list.append(emd)
+            sum_value += emd
+        mesh_distance.append(sum_value)
+    mesh_info.loc[:, 'distance'] = mesh_distance
+
+    ###Get the pictures
+    image_list = []
+    im_directory = 'C:\\Users\\Admin\\Documents\\GitHub\\Multimedia-retrieval\\proj\\mesh_picture\\image'
+    for file_name in os.listdir(im_directory):
+        image_list.append(os.path.join(im_directory, file_name))
+    image_list.sort(key=natural_keys)
+    mesh_info = mesh_info.sort_values(by=['mesh_id'])
+    mesh_info.loc[:, 'image'] = image_list
+
     result = mesh_info.sort_values(by=['distance'])
-    return result, sorted(emd_list)
+    return result#, euc_list, emd_list
 

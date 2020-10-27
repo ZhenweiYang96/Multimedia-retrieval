@@ -1,120 +1,72 @@
-from ui_function import *
-from processing_distribution_function import *
-import itertools
-from sklearn.metrics import confusion_matrix, classification_report, precision_recall_fscore_support as score, \
-    plot_roc_curve
-from evaluation_function import plotting_roc_curve
+import sys
+import tkinter as tk
+from matching import match_mesh
+from tkinterhtml import HtmlFrame
+from urllib.request import urlopen
+from PyQt5.QtCore import *
+from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtWidgets import QApplication
 
 
-def run():
+def main():
 
-    running = input('do you want to run all the shapes? y/n ')
-    if running == 'y':
-        mesh_df = pd.read_csv('excel_file\\matching_features.csv')
-        mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']] = mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
-            feature_comma_adjustment)
-        del mesh_df['Unnamed: 0']
-        del mesh_df['Unnamed: 0.1']
-    else:
-        from_cache = input('load from cash? y/n ')
-        if from_cache == 'n':
+    def run_whole_database():
+        run_database = int(no_mesh_database.get())
+        match_mesh('y', run_database)
 
-            file_path = input('Hellllllllllllo, input the mesh: ')
-            # visual_data(file_path)
+    def run_single_mesh():
+        run_mesh = int(single_mesh.get())
+        mesh = mesh_id.get()
+        print(run_mesh)
+        match_mesh('n', run_mesh, mesh)
+        frame = HtmlFrame(root, horizontal_scrollbar="auto")
+        frame.set_content(urlopen("https://duckduckgo.com").read().decode())
+    root = tk.Tk()
 
-            ###Basic information of the mess
-            # df = one_data_information(file_path)
-            ###Process the mesh
+    width = 500
+    height = 750
+    canvas1 = tk.Canvas(root, width=width * 2, height=height, relief='raised')
+    canvas1.pack()
 
-            print('calculating features...')
-            mesh = preprocess_mesh(file_path)
-            mesh_df = feature_extraction(mesh, file_path)
-            mesh_df = to_bin(mesh_df)
+    label = tk.Label(root, text='CBSR system',font=('helvetica', 20, 'bold'))
+    canvas1.create_window(width, height/12, window=label)
 
-            print('Normalizing the features...')
-            mean_std_data = pd.read_csv('excel_file\\standardized.csv')
-            means = mean_std_data[['surface_area', 'sphericity', 'bounding_box_volume', 'diameter', 'eccentricity']].mean()
-            std = mean_std_data[['surface_area', 'sphericity', 'bounding_box_volume', 'diameter', 'eccentricity']].std()
-            mesh_df[['surface_area']] = single_value_normalize(mesh_df[['surface_area']], means[0], std[0])
-            mesh_df[['sphericity']] = single_value_normalize(mesh_df[['sphericity']], means[1], std[1])
-            mesh_df[['bounding_box_volume']] = single_value_normalize(mesh_df[['bounding_box_volume']], means[2], std[2])
-            mesh_df[['diameter']] = single_value_normalize(mesh_df[['diameter']], means[3], std[3])
-            mesh_df[['eccentricity']] = single_value_normalize(mesh_df[['eccentricity']], means[4], std[4])
+    label1_1 = tk.Label(root, text='Running the whole database')
+    label1_1.config(font=('helvetica', 14))
+    canvas1.create_window(width, height/6, window=label1_1)
 
-            mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']] = mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(to_percentage)
-            mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']] = mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
-                convert_scientific_notation)
-            mesh_df.to_csv('processing\\mesh_feature.csv')
-            mesh_df = pd.read_csv('processing\\mesh_feature.csv')
-            mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']] = mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
-                feature_comma_adjustment)
-            del mesh_df['Unnamed: 0']
-        else:
-            mesh_df = pd.read_csv('processing\\mesh_feature.csv')
-            mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']] = mesh_df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
-                feature_comma_adjustment)
-            del mesh_df['Unnamed: 0']
+    label1_2 = tk.Label(root, text='Comparing to how many mashes?')
+    label1_2.config(font=('helvetica', 12))
+    canvas1.create_window(width, height/5, window=label1_2)
 
-    ###All the numerical features
-    distribution = mesh_df.iloc[:, 2:len(mesh_df.columns)]
+    no_mesh_database = tk.Entry(root)
+    canvas1.create_window(width, height/4, window=no_mesh_database)
 
-    ###Calculate weights and adjust the values
-    # weights = get_weights('excel_file\\matching_features.csv')
-    has_weight = input('adjust weight? y/n ')
-    if has_weight == 'y':
-        print('adjusting the weights...')
-        weights = pd.read_csv('excel_file\\weights.csv')
-        weights = weights.loc[:, 'weights']
-        weights = np.asarray(weights)
-        weights = 1 / np.asarray(weights)
-    else:
-        weights = [1] * 10
-    distribution.iloc[:, 0:5] = np.multiply(distribution.iloc[:, 0:5], weights[0:5])
-    distribution['A3'] = [[i * weights[5] for i in row] for row in distribution['A3']]
-    distribution['D1'] = [[i * weights[6] for i in row] for row in distribution['D1']]
-    distribution['D2'] = [[i * weights[7] for i in row] for row in distribution['D2']]
-    distribution['D3'] = [[i * weights[8] for i in row] for row in distribution['D3']]
-    distribution['D4'] = [[i * weights[9] for i in row] for row in distribution['D4']]
+    button1 = tk.Button(text='Accuracy of the CBSR system', command=run_whole_database, bg='brown', fg='white',
+                        font=('helvetica', 10, 'bold'))
+    canvas1.create_window(width, height/3.5, window=button1)
 
-    db_eval = pd.DataFrame(columns=['shape', 'precision', 'recall', 'accuracy'])
-    no_retrieve = int(input('how many shapes do you want to retrieve? '))
-    print('matching the features...')
-    ###iterate the rows:
-    for row in range(0, len(distribution)):
-        ###Create a flattened list so we can use the EMD
-        row_value = list(itertools.chain.from_iterable(distribution.iloc[row:row+1].values.tolist()))
-        dist_list = row_value[0:5]
-        array_flattening = np.hstack(row_value[5:10])
-        dist_list.extend(array_flattening)
-        result = matching(dist_list, has_weight)
-        match = result.iloc[0:no_retrieve, 0:3]
-        print(mesh_df)
+    label2 = tk.Label(root, text='Running one single mesh')
+    label2.config(font=('helvetica', 14))
+    canvas1.create_window(width, height/2.5, window=label2)
 
-        y_true = np.repeat(np.asarray(mesh_df.loc[row, 'class']), len(np.asarray(match.iloc[:, 1])), axis=0)
-        y_pred = np.asarray(match.iloc[:, 1])
-        cm_df = pd.DataFrame(
-            confusion_matrix(y_true,
-                             y_pred,
-                             labels=list(set(np.asarray(match.iloc[:, 1]))),
-                             normalize='true'),
-            index=list(set(np.asarray(match.iloc[:, 1]))),
-            columns=list(set(np.asarray(match.iloc[:, 1]))))
+    label2_1 = tk.Label(root, text='What is the mesh id you want to compare?')
+    label2_1.config(font=('helvetica', 12))
+    canvas1.create_window(width, height/2.25, window=label2_1)
 
-        report = classification_report(y_true=y_true,
-                                       y_pred=y_pred,
-                                       target_names=list(set(np.asarray(match.iloc[:, 1]))),
-                                       output_dict=True)
+    mesh_id = tk.Entry(root)
+    canvas1.create_window(width, height/2, window=mesh_id)
 
-        precision, recall, _, _ = score(y_true, y_pred, average='macro')
-        shape = mesh_df.loc[row, 'class']
-        db_eval = db_eval.append(pd.DataFrame([[shape, precision, recall, report['accuracy']]]))
-        if running == 'n':
-            print('Precision : {}'.format(precision))
-            print('Recall    : {}'.format(recall))
-            print('Accuracy : {}'.format(report['accuracy']))
+    label2_2 = tk.Label(root, text='Comparing to how many mashes?')
+    label2_2.config(font=('helvetica', 12))
+    canvas1.create_window(width, height/1.85, window=label2_2)
 
+    single_mesh = tk.Entry(root)
+    canvas1.create_window(width, height/1.75, window=single_mesh)
 
-    db_eval.to_csv('processing\\all_db_match.csv')
+    button2 = tk.Button(text='Compare mesh', command=run_single_mesh, bg='brown', fg='white',
+                        font=('helvetica', 10, 'bold'))
+    canvas1.create_window(width, height/1.6, window=button2)
 
+    root.mainloop()
 
-run()
