@@ -1,13 +1,13 @@
 # library
 #import pandas as pd
 #from Step4_matching_normalize_features import *
-from ui_function import *
 #from sklearn.neighbors import KNeighborsClassifier
 #from sklearn import metrics
 #from sklearn.metrics import plot_confusion_matrix
 from sklearn.neighbors import NearestNeighbors
 from matching_function import *
 from IPython.core.display import HTML
+
 
 #
 
@@ -35,9 +35,9 @@ def split(df, colname):
 
 ######
 #df = stand_feature
-#mesh_id = 62
-#no_mesh=8
-def scalability(mesh_id, no_mesh):
+#mesh_id = mesh_id.strip(' ').split(',')
+#mesh_id =  [int(x) for x in mesh_id]
+def scalability(mesh_id, no_mesh, single_mesh=False):
     df = pd.read_csv("excel file/matching_features.csv")
     df[['A3', 'D1', 'D2', 'D3', 'D4']] = df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
         feature_adjustment)
@@ -51,41 +51,61 @@ def scalability(mesh_id, no_mesh):
     df = df.drop(['A3', 'D1', 'D2', 'D3', 'D4'], axis=1)
 
     #df_back = df.drop(df.index[df['mesh_id'] == mesh_id].to_list()[0],axis=0)
-    query_shape = df[df['mesh_id'] == mesh_id].iloc[:,3:108]
     X = df.iloc[:,3:108]
-    knn = NearestNeighbors(n_neighbors=no_mesh, algorithm='kd_tree').fit(X)
-    distances_knn, _ = knn.kneighbors(np.asarray(query_shape).reshape(1,-1))
-    distances_knn = distances_knn[0].tolist()
-    #indices_knn = indices_knn[0].tolist()  # the output are similar shapes
-    # start with rnn
-    rnn = NearestNeighbors(radius=max(distances_knn)*1.05)
-    rnn.fit(X)
-    distances_rnn, indices_rnn = rnn.radius_neighbors(np.asarray(query_shape).reshape(1,-1))
-    distances_rnn = distances_rnn[0].tolist()
-    indices_rnn = indices_rnn[0].tolist()
-    output_meshid = df.iloc[indices_rnn,1].tolist()
-    output_class = df.iloc[indices_rnn,2].tolist()
-    data = {'mesh_id': output_meshid,
-            'class': output_class,
-            'distance': distances_rnn,
-            'image': ["3D database/image/" + str(x) + ".png" for x in output_meshid],
-            'new_index': np.repeat(df[df['mesh_id'] == mesh_id].iloc[:, 2], len(output_meshid))
-    }
-    result = pd.DataFrame(data, columns = ["mesh_id", "class","distance","image", "new_index"] )
-    result = result.sort_values('distance')
-    result.to_html('image.html', escape=False, formatters=dict(image=path_to_image_html))
-    return result
+    no_retrieve  = no_mesh + 1
+    result_df = pd.DataFrame()
+    for item in mesh_id:
+        query_shape = df[df['mesh_id'] == item].iloc[:, 3:108]
+        knn = NearestNeighbors(n_neighbors=no_retrieve, algorithm='kd_tree').fit(X)
+        distances_knn, _ = knn.kneighbors(np.asarray(query_shape).reshape(1,-1))
+        distances_knn = distances_knn[0].tolist()
+        #indices_knn = indices_knn[0].tolist()  # the output are similar shapes
+        # start with rnn
+        rnn = NearestNeighbors(radius=max(distances_knn)*1.05)
+        rnn.fit(X)
+        distances_rnn, indices_rnn = rnn.radius_neighbors(np.asarray(query_shape).reshape(1,-1))
+        distances_rnn = distances_rnn[0].tolist()
+        indices_rnn = indices_rnn[0].tolist()
+        output_meshid = df.iloc[indices_rnn,1].tolist()
+        output_class = df.iloc[indices_rnn,2].tolist()
+        data = {'mesh_id': output_meshid,
+                'class': output_class,
+                'distance': distances_rnn,
+                'image': ["3D database/image/" + str(x) + ".png" for x in output_meshid],
+                'new_index': np.repeat(df[df['mesh_id'] == item].iloc[:, 2], len(output_meshid))
+        }
+        match = pd.DataFrame(data, columns = ["mesh_id", "class","distance","image", "new_index"] )
+        match = match.sort_values('distance')
+        distance_df = match.iloc[:, 2:4]
+        mesh_path = match.iloc[:, len(match.columns) - 2:len(match.columns)-1]
+        mesh_path = mesh_path.transpose().iloc[0,:].tolist()
+        #mesh_path.index = np.repeat([mesh_path.iloc[0, 0]], 1, axis=0).tolist()
+        result = [path_to_image_html(x, distance_df) for x in mesh_path]
+        result = pd.DataFrame([result])
+        #result.to_html('image.html', escape=False, formatters=dict(image=path_to_image_html))
+        result_df = result_df.append(result)
+    if single_mesh == True:
+        return match
+    ###Change column name
+    else:
+        column_name = []
+        for i in range(0, len(result_df.columns)):
+            i = str(i)
+            column_name.append(i)
 
-#### following is the library recommended by the teacher: ANN
-# I couldn't find where to use radius NN
-#from annoy import AnnoyIndex
-#t = AnnoyIndex(105, "euclidean")
-#for i in range(380):
-   # v = np.asarray(X.loc[i,:])
-   # t.add_item(i, v)
+        result_df.columns = column_name
+        index_name = []
+        for j in range(0, len(result_df)):
+            col = result_df.iloc[j, 0]
+                # print(col)
+            index_name.append(col)
 
+        result_df.index = index_name
+        del result_df['0']
+            ###Write the result
 
+            ###Rendering the images in the dataframe using the HTML method.
+            # HTML(result_df.to_html(escape=False, formatters=dict(image=path_to_image_html)))
+        result_df.to_html('/Users/yzw/Desktop/image_sc.html', escape=False)
+        #return result_html
 
-#t.build(19)
-#indices, distances = t.get_nns_by_item(0, 8, include_distances = True)
-#max(distances)*1.15

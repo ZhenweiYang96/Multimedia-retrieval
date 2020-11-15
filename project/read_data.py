@@ -86,7 +86,7 @@ def mesh_to_data(directory, name):
     return mesh_df.to_excel(saved_directory + name + '.xlsx', index=False)  # save an excel
 
 
-mesh_to_data('data\\backup\\LabeledDB_new', 'standard_result')
+mesh_to_data('data\\LabeledDB_new', 'standard_result')
 
 
 

@@ -5,6 +5,10 @@ from step3_function import *
 import re
 from statistics import stdev
 from processing_distribution_function import *
+import numpy as np
+from scipy.spatial import distance
+from scipy import stats
+
 from PIL import Image
 import glob
 import itertools
@@ -16,65 +20,6 @@ def visual_data(path, x_trans=0, y_trans=0, z_trans=0):
     mesh_mv = copy.deepcopy(mesh).translate((x_trans, y_trans, z_trans), relative=False)
     mesh_mv.compute_vertex_normals()
     open3d.visualization.draw_geometries([mesh, mesh_mv], mesh_show_wireframe=True)
-
-
-# def one_data_information(path):
-#     mesh_df = pd.DataFrame(
-#         columns=['id', 'class_shape', 'num_faces', 'num_vertices', 'type_shape', 'barycenter',
-#                  'distance from barycenter to the origin', 'bounding_box_points', 'extent_length',
-#                  'extent_x', 'extent_y', 'extent_z', 'max_length', 'bounding box volume', 'major angle',
-#                  'second angle'])
-#
-#     mesh = open3d.io.read_triangle_mesh(path)
-#
-#     ###Class shape and id
-#     splitting = path.split("\\")
-#     class_shape = splitting[4]
-#     sep = '.'
-#     mesh_id = splitting[6].split(sep, 1)[0]
-#
-#     ###the number of faces and vertices of the shape
-#     mesh_triangles = len(np.asarray(mesh.triangles))
-#     mesh_vertices = len(np.asarray(mesh.vertices))
-#     ###the type of faces
-#     faces_type = "triangles"
-#     ###barycenter
-#     mesh_barycenter = np.asarray(mesh.get_center())
-#     mesh_distance_to_origin = np.linalg.norm(mesh_barycenter)
-#     ###the axis-aligned 3D bounding box of the shapes
-#     bounding_box = open3d.geometry.AxisAlignedBoundingBox.get_axis_aligned_bounding_box(mesh)
-#     bounding_box_points = np.asarray(
-#         open3d.geometry.AxisAlignedBoundingBox.get_box_points(bounding_box))  # get bounding points
-#     extent_length = np.asarray(
-#         open3d.geometry.AxisAlignedBoundingBox.get_extent(bounding_box))  # get length
-#     extent_x = extent_length[0]
-#     extent_y = extent_length[1]
-#     extent_z = extent_length[2]
-#     max_extent = max(extent_x, extent_y, extent_z)
-#     bounding_box_volume = bounding_box.volume()
-#
-#     eigen_values, eigen_vectors = calc_eigen(mesh)
-#     position = np.argsort(eigen_values)[::-1]
-#
-#     major_eigen = eigen_vectors[:, position[0]]
-#     cos_major_angle = (major_eigen[0] * 1) / (
-#         sqrt(major_eigen[0] ** 2 + major_eigen[1] ** 2 + major_eigen[2] ** 2))
-#
-#     second_eigen = eigen_vectors[:, position[1]]
-#     cos_second_angle = (second_eigen[1] * 1) / (
-#         sqrt(second_eigen[0] ** 2 + second_eigen[1] ** 2 + major_eigen[2] ** 2))
-#     mesh_df = mesh_df.append(pd.DataFrame([[mesh_id, class_shape, mesh_triangles, mesh_vertices, faces_type,
-#                                             mesh_barycenter, mesh_distance_to_origin,
-#                                             bounding_box_points, extent_length, extent_x, extent_y,
-#                                             extent_z, max_extent, bounding_box_volume, cos_major_angle,
-#                                             cos_second_angle]],
-#                                           columns=mesh_df.columns))
-#     return mesh_df
-
-import numpy as np
-from scipy.spatial import distance
-from scipy import stats
-
 
 def adjust_string_to_float(value):
     col = value.str.strip('[]')
@@ -212,8 +157,20 @@ def get_weights(database_name):
 
 
 # Converting links to html tags
-def path_to_image_html(path):
-    return '<img src="' + path + '" width="200" >'
+def path_to_image_html(path, distance_df):
+    #splitting = path.split("/")
+    #sep = '.'
+    #mesh_id = splitting[len(splitting) - 1].split(sep, 1)[0]
+    distance_mesh = distance_df['distance'][distance_df['image'] == path]
+    distance_mesh = distance_mesh.to_string()
+    splits = distance_mesh.split(' ')
+    distance_mesh = splits[4]
+    sep = '\n'
+    distance_mesh = distance_mesh.split(sep, 1)[0]
+    #print(distance_mesh)
+    image_html = '<img src="' + path + '" width="200"><br>' + '<center>distance = {}'.format(distance_mesh)
+
+    return image_html
 
 
 def atoi(text):
@@ -229,7 +186,7 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
-def matching(single_feature):
+def matching(single_feature, no_retrieve, running):
 
     ###Features of all the meshes we have seen so far
     database_feature = pd.read_csv('excel_file\\matching_features.csv')
@@ -248,12 +205,7 @@ def matching(single_feature):
     weights = 1 / np.asarray(weights)
 
     for _, row in database_feature.iloc[:, 2:len(database_feature.columns)].iterrows():
-        # row[0:5] = np.multiply(row[0:5], weights[0:5])
-        # row[5] = [i * weights[5] for i in row[5]]
-        # row[6] = [i * weights[6] for i in row[6]]
-        # row[7] = [i * weights[7] for i in row[7]]
-        # row[8] = [i * weights[8] for i in row[8]]
-        # row[9] = [i * weights[9] for i in row[9]]
+
         ###Create a flattened list so we can use the EMD
         single_value_vector = row[0:5].tolist()
         distribution_vector = np.hstack(row[5:10]).tolist()
@@ -282,6 +234,19 @@ def matching(single_feature):
     mesh_info = mesh_info.sort_values(by=['mesh_id'])
     mesh_info.loc[:, 'image'] = image_list
 
-    result = mesh_info.sort_values(by=['distance'])
-    return result#, euc_list, emd_list
+    ###Replace the index with the first image (which is the original query shape
+    mesh_info.index = np.repeat([mesh_info.iloc[0, 3]], len(mesh_info), axis=0).tolist()
+    mesh_info = mesh_info.sort_values(by=['distance'])
+
+    if running == 'y':
+        result = mesh_info.iloc[0:no_retrieve]
+        return result,  mesh_info.iloc[0:no_retrieve, 2:4]
+
+    else:
+        result = mesh_info.iloc[0:no_retrieve, len(mesh_info.columns) - 1:len(mesh_info.columns)]
+        result_shape = result.transpose()
+        result_shape.index = np.repeat([result_shape.iloc[0, 0]], 1, axis=0).tolist()
+        ###Remove first query because it is the same
+        #result_shape = result_shape.iloc[0, 1:len(result_shape.columns)]
+        return result_shape, mesh_info.iloc[0:no_retrieve, 2:4]#, euc_list, emd_list
 
