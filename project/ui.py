@@ -10,7 +10,7 @@ from xhtml2pdf import pisa
 from pdf2image import convert_from_path
 import tempfile
 from matplotlib import pyplot as plt
-
+from evaluation import *
 
 def convert_pdf(file_path, output_path):
     # save temp image files in temp dir, delete them after we are finished
@@ -66,10 +66,10 @@ def main():
         mesh = mesh_id_nm.get()
         mesh = mesh.split(',')
         match_mesh('n', run_mesh, mesh)
-        webbrowser.open(url='file:///C:/Users/Admin/Documents/GitHub/Multimedia-retrieval/proj/image.html')
+        webbrowser.open(url='file:///C:/Users/Admin/Documents/GitHub/MR/image.html')
         for i in glob.glob("process_image\\*.html"):
             os.remove(i)
-            
+
     def run_one_mesh_sc():
         run_mesh = int(no_mesh_sc.get())
         print(run_mesh)
@@ -78,8 +78,8 @@ def main():
         mesh_id_list = mesh_id.strip(' ').split(",")
         mesh_id_list = map(int, mesh_id_list)
         scalability(mesh_id_list, run_mesh)
-        webbrowser.open("file:///C:/Users/Admin/Documents/GitHub/Multimedia-retrieval/proj/image_sc.html")
-    
+        webbrowser.open("file:///C:/Users/Admin/Documents/GitHub/MR/image_sc.html")
+
     def run_whole_database_sc():
         run_database = int(no_mesh_ev_sc.get())
         evaluate_scalability(run_database)
@@ -122,7 +122,7 @@ def main():
     canvas1.create_window(width / 2, height / 3.5, window=nm_num_mesh)
     no_mesh_nm = tk.Entry(root)
     canvas1.create_window(width / 2, height / 3.3, window=no_mesh_nm)
-    nm_one_button = Button(root, text="searching", font=('helvetica', 11),
+    nm_one_button = Button(root, text="search", font=('helvetica', 11),
                            bg="brown", fg="white", relief="raised", command=run_single_mesh)
     canvas1.create_window(width / 2, height / 3.1, window=nm_one_button)
 
@@ -152,7 +152,7 @@ def main():
     canvas1.create_window(width * 1.5, height / 3.5, window=sc_num_mesh)
     no_mesh_sc = tk.Entry(root)
     canvas1.create_window(width * 1.5, height / 3.3, window=no_mesh_sc)
-    sc_one_button = Button(root, text="searching", font=('helvetica', 11),
+    sc_one_button = Button(root, text="search", font=('helvetica', 11),
                            bg="brown", fg="white", relief="raised", command=run_one_mesh_sc)
     canvas1.create_window(width * 1.5, height / 3.1, window=sc_one_button)
 

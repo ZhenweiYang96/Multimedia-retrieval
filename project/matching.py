@@ -1,10 +1,8 @@
 from matching_function import *
 from processing_distribution_function import *
 import itertools
-from sklearn.metrics import confusion_matrix, classification_report, precision_recall_fscore_support as score, \
-    plot_roc_curve
+import time
 from evaluation import plot_accuracy
-from IPython.core.display import HTML
 
 
 def match_mesh(running, no_mesh, mesh_id=None):
@@ -38,6 +36,7 @@ def match_mesh(running, no_mesh, mesh_id=None):
 
     ###Dataframe for selecting few meshes, showing the query shapes
     result_df = pd.DataFrame()
+    t0 = time.time()
     for row in range(0, len(distribution)):
         print(counter)
         ###Create a flattened list so we can use the EMD
@@ -50,26 +49,6 @@ def match_mesh(running, no_mesh, mesh_id=None):
             match = result.iloc[0:no_retrieve, 0:len(result.columns)]
             new_index = np.repeat(np.asarray(mesh_df.iloc[row, 2]), no_retrieve, axis=0).tolist()
             match.loc[:, 'new_index'] = new_index
-            y_true = np.repeat(np.asarray(mesh_df.iloc[row, 2]), len(np.asarray(match.iloc[:, 1])), axis=0)
-            y_pred = np.asarray(match.iloc[:, 1])
-            cm_df = pd.DataFrame(
-                confusion_matrix(y_true,
-                                 y_pred,
-                                 labels=list(set(np.asarray(match.iloc[:, 1]))),
-                                 normalize='true'),
-                index=list(set(np.asarray(match.iloc[:, 1]))),
-                columns=list(set(np.asarray(match.iloc[:, 1]))))
-
-            report = classification_report(y_true=y_true,
-                                           y_pred=y_pred,
-                                           target_names=list(set(np.asarray(match.iloc[:, 1]))),
-                                           output_dict=True)
-
-            precision, recall, _, _ = score(y_true, y_pred, average='macro')
-            if running == 'n':
-                print('Precision : {}'.format(precision))
-                print('Recall    : {}'.format(recall))
-                print('Accuracy : {}'.format(report['accuracy']))
             db_eval = db_eval.append(match)
 
         if running == 'n':
@@ -79,6 +58,8 @@ def match_mesh(running, no_mesh, mesh_id=None):
         counter += 1
 
     if running == 'y':
+        t1 = time.time()
+        print(t1 - t0)
         plot_accuracy(db_eval)
 
     if running == 'n':
@@ -105,5 +86,4 @@ def match_mesh(running, no_mesh, mesh_id=None):
         #HTML(result_df.to_html(escape=False, formatters=dict(image=path_to_image_html)))
 
         result_df.to_html('image.html', escape=False)
-        1
 #match_mesh('n', 20)

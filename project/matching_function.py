@@ -6,12 +6,9 @@ import re
 from statistics import stdev
 from processing_distribution_function import *
 import numpy as np
-from scipy.spatial import distance
+import open3d
 from scipy import stats
-
-from PIL import Image
-import glob
-import itertools
+import os
 
 # Step 1 read data
 def visual_data(path, x_trans=0, y_trans=0, z_trans=0):
@@ -45,7 +42,6 @@ def to_percentage(col):
 
 def convert_scientific_notation(col):
     for i in range(0, len(col)):
-        print(col[i])
         col[i] = ["{:.7f}".format(value) for value in col[i]]
     return col
 
@@ -169,7 +165,6 @@ def path_to_image_html(path, distance_df):
     distance_mesh = distance_mesh.split(sep, 1)[0]
     #print(distance_mesh)
     image_html = '<img src="' + path + '" width="200"><br>' + '<center>distance = {}'.format(distance_mesh)
-
     return image_html
 
 
@@ -203,7 +198,9 @@ def matching(single_feature, no_retrieve, running):
     weights = weights.loc[:, 'weights']
     weights = np.asarray(weights)
     weights = 1 / np.asarray(weights)
-
+    #print(weights/sum(weights))
+    weights = weights / sum(weights)
+    #weights = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     for _, row in database_feature.iloc[:, 2:len(database_feature.columns)].iterrows():
 
         ###Create a flattened list so we can use the EMD
@@ -227,7 +224,7 @@ def matching(single_feature, no_retrieve, running):
 
     ###Get the pictures
     image_list = []
-    im_directory = 'C:\\Users\\Admin\\Documents\\GitHub\\Multimedia-retrieval\\proj\\mesh_picture\\image'
+    im_directory = 'mesh_picture\\image'
     for file_name in os.listdir(im_directory):
         image_list.append(os.path.join(im_directory, file_name))
     image_list.sort(key=natural_keys)

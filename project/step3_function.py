@@ -132,7 +132,7 @@ def D3(mesh, seed):
         sample = random.sample(range(0, num_vertex), 3)
         v1 = vertex[sample[1]] - vertex[sample[0]]
         v2 = vertex[sample[2]] - vertex[sample[0]]
-        area.append(0.5 * np.linalg.norm(np.cross(v1, v2)))
+        area.append(sqrt(0.5 * np.linalg.norm(np.cross(v1, v2))))
     return area
 # sns.kdeplot(area)
 
@@ -147,7 +147,7 @@ def D4(mesh, seed):
         v1 = vertex[sample[1]] - vertex[sample[0]]
         v2 = vertex[sample[2]] - vertex[sample[0]]
         v3 = vertex[sample[3]] - vertex[sample[0]]
-        volume_D4.append(1/6 * abs(np.dot(np.cross(v1, v2), v3)))
+        volume_D4.append((1/6 * abs(np.dot(np.cross(v1, v2), v3))) ** (1/3))
     return volume_D4
 #sns.kdeplot(volume_D4)
 

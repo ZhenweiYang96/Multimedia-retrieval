@@ -1,7 +1,9 @@
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 import pandas as pd
+
 
 def plot_distribution(df, col, xmin, xmax, limit):
     fig, ax = plt.subplots(5, 4)
@@ -57,15 +59,15 @@ def to_bin(df, plot=False):
 
     if plot:
         print('A3')
-        plot_distribution(df, 'A3', a3min, a3max, 1.5)
+        #plot_distribution(df, 'A3', a3min, a3max, 1.5)
         print('D1')
-        plot_distribution(df, 'D1', d1min, d1max, 1)
+        #plot_distribution(df, 'D1', d1min, d1max, 1)
         print('D2')
-        plot_distribution(df, 'D2', d2min, d2max, 1)
+        #plot_distribution(df, 'D2', d2min, d2max, 1)
         print('D3')
-        plot_distribution(df, 'D3', d3min, d3max, 1)
+        #plot_distribution(df, 'D3', d3min, d3max, 1)
         print('D4')
-        plot_distribution(df, 'D4', d4min, d4max, 2)
+        plot_distribution(df, 'D4', d4min, d4max, 1)
         print('end')
     df['A3'] = df['A3'].map(lambda x: np.histogram(x, bins=20, range=(a3min, a3max)))
     df['D1'] = df['D1'].map(lambda x: np.histogram(x, bins=20, range=(d1min, d1max)))
@@ -79,3 +81,5 @@ def to_bin(df, plot=False):
     df['D3'] = [i[0] for i in df['D3']]
     df['D4'] = [i[0] for i in df['D4']]
     return df
+
+

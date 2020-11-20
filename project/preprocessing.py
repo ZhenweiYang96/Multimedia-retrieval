@@ -5,7 +5,9 @@ import trimesh
 from collections import Counter
 from read_data import mesh_to_data
 import time
-
+import pandas as pd
+import open3d
+import os
 mesh_df = pd.read_excel('excel_file\\standard_result.xlsx')
 ############################################
 ###Statistics

@@ -7,7 +7,7 @@
 from sklearn.neighbors import NearestNeighbors
 from matching_function import *
 from IPython.core.display import HTML
-
+import time
 
 #
 
@@ -38,7 +38,8 @@ def split(df, colname):
 #mesh_id = mesh_id.strip(' ').split(',')
 #mesh_id =  [int(x) for x in mesh_id]
 def scalability(mesh_id, no_mesh, single_mesh=False):
-    df = pd.read_csv("excel file/matching_features.csv")
+    #t0 = time.time()
+    df = pd.read_csv("excel_file/matching_features.csv")
     df[['A3', 'D1', 'D2', 'D3', 'D4']] = df[['A3', 'D1', 'D2', 'D3', 'D4']].apply(
         feature_adjustment)
     del df['Unnamed: 0']
@@ -51,9 +52,11 @@ def scalability(mesh_id, no_mesh, single_mesh=False):
     df = df.drop(['A3', 'D1', 'D2', 'D3', 'D4'], axis=1)
 
     #df_back = df.drop(df.index[df['mesh_id'] == mesh_id].to_list()[0],axis=0)
-    X = df.iloc[:,3:108]
-    no_retrieve  = no_mesh + 1
+    X = df.iloc[:, 3:108]
+    no_retrieve = no_mesh + 1
     result_df = pd.DataFrame()
+    #t1 = time.time()
+    #print('scalability time: ', t1 - t0)
     for item in mesh_id:
         query_shape = df[df['mesh_id'] == item].iloc[:, 3:108]
         knn = NearestNeighbors(n_neighbors=no_retrieve, algorithm='kd_tree').fit(X)
@@ -71,7 +74,7 @@ def scalability(mesh_id, no_mesh, single_mesh=False):
         data = {'mesh_id': output_meshid,
                 'class': output_class,
                 'distance': distances_rnn,
-                'image': ["3D database/image/" + str(x) + ".png" for x in output_meshid],
+                'image': [r"C:\Users\Admin\Documents\GitHub\Multimedia-retrieval\proj\mesh_picture\image\\" + str(x) + ".png" for x in output_meshid],
                 'new_index': np.repeat(df[df['mesh_id'] == item].iloc[:, 2], len(output_meshid))
         }
         match = pd.DataFrame(data, columns = ["mesh_id", "class","distance","image", "new_index"] )
@@ -106,6 +109,6 @@ def scalability(mesh_id, no_mesh, single_mesh=False):
 
             ###Rendering the images in the dataframe using the HTML method.
             # HTML(result_df.to_html(escape=False, formatters=dict(image=path_to_image_html)))
-        result_df.to_html('/Users/yzw/Desktop/image_sc.html', escape=False)
+        result_df.to_html('image_sc.html', escape=False)
         #return result_html
 
